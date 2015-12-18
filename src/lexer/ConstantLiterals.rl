@@ -24,7 +24,7 @@
     string_lit = ( '"' ( [^"\\\n] | /\\./ )* '"' );
     
     #White Space
-    whitespace = [ \t\n\v\f];
+    whitespace = [ \t\n\v\f]+;
     
     #Single Line Comment
     single_comment = "//" [^\n]* "\n";

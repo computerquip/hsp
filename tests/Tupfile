@@ -1,3 +1,4 @@
 INCLUDES = ../src
+LIBDIRS = ../src/lexer
 
-: foreach *.c |> gcc -c %f -I$(INCLUDES) -o %o |> %B.o
+: foreach *.c | ../src/lexer/libLexer.a |> gcc %f -I$(INCLUDES) -L$(LIBDIRS) -lLexer -o %o |> %B

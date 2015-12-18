@@ -18,6 +18,8 @@ int main(void)
         if (token == TK_Invalid) {
             printf("Invalid Token!\n");
             break;
+        } else {
+            printf("Valid Token: %s\n", GET_TOKEN_STRING(token));
         }
         
         token = hsp_lex(lexer);

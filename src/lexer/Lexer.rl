@@ -1,3 +1,4 @@
+#include "Lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,6 +69,20 @@ struct hsp_lexer {
         multi_comment
             { send_token(TK_Comment); fbreak; };
         
+        struct
+            { send_token(TK_Struct); fbreak; };
+            
+        lcurly_op
+            { send_token(TK_LCurly); fbreak; };
+        rcurly_op
+            { send_token(TK_RCurly); fbreak; };
+            
+        int
+            { send_token(TK_Int); fbreak; };
+            
+        semi_op
+            { send_token(TK_SemiColon); fbreak; };
+            
         identifier
             { send_token(TK_Identifier); fbreak; };
     *|; 
