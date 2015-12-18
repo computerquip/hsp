@@ -65,6 +65,7 @@ extern "C" {
 struct hsp_lexer *hsp_init_lexer(char *data, size_t length);
 void hsp_destroy_lexer(struct hsp_lexer *lexer);
 int hsp_lex(struct hsp_lexer *lexer);
+void hsp_reset_lexer(struct hsp_lexer *lexer);
 
 #ifdef __cplusplus
 }
