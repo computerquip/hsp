@@ -1,0 +1,3 @@
+INCLUDES = ../src
+
+: foreach *.c |> gcc -c %f -I$(INCLUDES) -o %o |> %B.o
