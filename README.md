@@ -23,7 +23,7 @@ None
 
 # Interface
 
-## Lexical Analyzer
+#### Lexical Analyzer
 ```C
 struct hsp_lexer *hsp_init_lexer(char *data, size_t length)
 ```
