@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct hsp_lexer {
+struct HSPLexer {
     /* p - Position within the data block. */
     char *p;
     
@@ -32,7 +32,7 @@ struct hsp_lexer {
     int act;
 };
 
-#define send_token(_token) token.id = _token;
+#define send_token(_token) token.id = (_token)
 
 %%{
     machine hsp;
@@ -91,9 +91,9 @@ struct hsp_lexer {
 /* nofinal is used since we don't test for final state.  */
 %%write data nofinal;
 
-extern struct hsp_lexer *hsp_init_lexer(char *data, size_t length)
+extern struct HSPLexer *hsp_create_lexer(char *data, size_t length)
 {
-    struct hsp_lexer *lexer = malloc(sizeof(struct hsp_lexer));
+    struct HSPLexer *lexer = malloc(sizeof(struct HSPLexer));
     
     lexer->data = data;
     lexer->length = length;
@@ -107,12 +107,12 @@ extern struct hsp_lexer *hsp_init_lexer(char *data, size_t length)
     return lexer;
 }
 
-extern void hsp_destroy_lexer(struct hsp_lexer *lexer)
+extern void hsp_destroy_lexer(struct HSPLexer *lexer)
 {
     free(lexer);
 }
 
-extern struct HSPToken hsp_lex(struct hsp_lexer *lexer)
+extern struct HSPToken hsp_lex(struct HSPLexer *lexer)
 {
     struct HSPToken token = { TK_Invalid, 0 };
     
@@ -132,8 +132,9 @@ extern struct HSPToken hsp_lex(struct hsp_lexer *lexer)
     return token;
 }
 
-extern void hsp_reset_lexer(struct hsp_lexer *lexer)
+extern void hsp_reset_lexer(struct HSPLexer *lexer)
 {
     %%write init;
+    lexer->p = lexer->data;
 }
 

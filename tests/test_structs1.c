@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "lexer/Lexer.h"
+#include "parser/Parser.h"
 
 int main(void)
 {
@@ -9,8 +10,9 @@ int main(void)
         "\tint HEY;\n"
         "}\n";
         
-    struct hsp_lexer *lexer = hsp_init_lexer(test_string, strlen(test_string));
+    struct HSPLexer *lexer = hsp_create_lexer(test_string, strlen(test_string));
     struct HSPToken token = hsp_lex(lexer);
+    struct HSPParser *parser;
     
     while (token.id != TK_EndOfFile) {
         
@@ -28,6 +30,16 @@ int main(void)
     
     printf("String succesfully analyzed!\n");
     
+    /* Parser Test */
+    hsp_reset_lexer(lexer);
+    
+    parser = hsp_create_parser(lexer);
+    if (!hsp_parse(parser))
+        printf("Failed to parse string!\n");
+    else    
+        printf("String succesfully parsed!\n");
+    
+    hsp_destroy_parser(parser);
     hsp_destroy_lexer(lexer);
     
     return 0;

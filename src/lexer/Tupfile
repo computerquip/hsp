@@ -1,3 +1,2 @@
 : Lexer.rl |> ragel -o %o %b |> Lexer.c
 : Lexer.c |> gcc -o %o -c %f |> Lexer.o
-: Lexer.o |> ar r %o %b |> libLexer.a

@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct hsp_lexer;
+struct HSPLexer;
 
 /* Map of the numerous tokens to strings. */
 static const char *HSPTokenMap[] = {
@@ -81,10 +81,10 @@ struct HSPToken {
 extern "C" {
 #endif
     
-struct hsp_lexer *hsp_init_lexer(char *data, size_t length);
-void hsp_destroy_lexer(struct hsp_lexer *lexer);
-struct HSPToken hsp_lex(struct hsp_lexer *lexer);
-void hsp_reset_lexer(struct hsp_lexer *lexer);
+struct HSPLexer *hsp_create_lexer(char *data, size_t length);
+void hsp_destroy_lexer(struct HSPLexer *lexer);
+struct HSPToken hsp_lex(struct HSPLexer *lexer);
+void hsp_reset_lexer(struct HSPLexer *lexer);
 
 #ifdef __cplusplus
 }
