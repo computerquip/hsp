@@ -32,7 +32,7 @@ struct hsp_lexer {
     int act;
 };
 
-#define send_token(_token) token = _token;
+#define send_token(_token) token.id = _token;
 
 %%{
     machine hsp;
@@ -112,16 +112,20 @@ extern void hsp_destroy_lexer(struct hsp_lexer *lexer)
     free(lexer);
 }
 
-extern int hsp_lex(struct hsp_lexer *lexer)
+extern struct HSPToken hsp_lex(struct hsp_lexer *lexer)
 {
-    int token = TK_Invalid;
+    struct HSPToken token = { TK_Invalid, 0 };
     
     if (lexer->p == lexer->pe)
     {
-        return TK_EndOfFile;
+        token.id = TK_EndOfFile;
+        return token;
     }
     
     %%write exec;
+    
+    token.lexeme.size = lexer->te - lexer->ts;
+    token.lexeme.data = lexer->ts;
     
     lexer->length = lexer->p - lexer->data;
     

@@ -1,4 +1,7 @@
+#pragma once
+
 #include <stddef.h>
+#include <stdint.h>
 
 struct hsp_lexer;
 
@@ -30,7 +33,7 @@ static const char *HSPTokenMap[] = {
 
 /* While we don't use ASCII characters as tokens, 
  * I don't see why we should use 0-255 regardless... just to be safe. */
-enum HSPTokens {
+enum HSPTokenType {
     TK_Invalid = 256,
     
     /* Literals */
@@ -58,13 +61,29 @@ enum HSPTokens {
     TK_EndOfFile,
 };
 
+struct HSPLexeme {
+    uint16_t size;
+    const char* data;
+};
+
+union HSPTokenData {        
+        /* Constant or Literal Values */
+        uint32_t constant;
+};
+
+struct HSPToken {
+    int id;
+    struct HSPLexeme lexeme;
+    union HSPTokenData data;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
     
 struct hsp_lexer *hsp_init_lexer(char *data, size_t length);
 void hsp_destroy_lexer(struct hsp_lexer *lexer);
-int hsp_lex(struct hsp_lexer *lexer);
+struct HSPToken hsp_lex(struct hsp_lexer *lexer);
 void hsp_reset_lexer(struct hsp_lexer *lexer);
 
 #ifdef __cplusplus
