@@ -50,7 +50,7 @@ inline static bool datatype(struct HSPParser* parser)
 /*
  * declaration := datatype identifier TK_SemiColon | ;
  */
-inline static bool declaration(struct HSPParser* parser)
+inline static int declaration(struct HSPParser* parser)
 {
     printf("<%s>\n", __func__);
     
@@ -65,14 +65,14 @@ inline static bool declaration(struct HSPParser* parser)
 }
 
 /* 
- * declaration_list := declaration | declaration_list; 
+ * declaration_list := declaration | declaration declaration_list; 
  */
 inline static bool declaration_list(struct HSPParser* parser)
 {
     printf("<%s>\n", __func__);
     
     if (parser->token.id == TK_RCurly)
-        return;
+        return true;
     
     if (declaration(parser))
         declaration_list(parser);
