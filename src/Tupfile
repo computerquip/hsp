@@ -1,0 +1,1 @@
+: lexer/*.o parser/*.o |> ar r %o %f |> libhsp.a

@@ -1,0 +1,3 @@
+INCLUDES = ..
+
+: Parser.c |> gcc -I$(INCLUDES) -o %o -c %f |> Parser.o
