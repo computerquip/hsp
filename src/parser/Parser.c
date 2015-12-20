@@ -15,7 +15,9 @@ inline static void hsp_error(struct HSPParser* parser)
 {
     /* This can so easily be expanded on... */
     parser->healthy = false;
-    printf("<error>: %s\n", GET_TOKEN_STRING(parser->token.id));
+    printf("<error>: %s - %.*s\n", 
+           GET_TOKEN_STRING(parser->token.id),
+           parser->token.lexeme.size, parser->token.lexeme.data);
 }
 
 inline static void hsp_match(struct HSPParser* parser, int token)
@@ -32,6 +34,8 @@ inline static void hsp_match(struct HSPParser* parser, int token)
 
 inline static bool datatype(struct HSPParser* parser)
 {    
+    printf("<%s>\n", __func__);
+    
     switch (parser->token.id) {
     case TK_Int:
         match(TK_Int);
@@ -41,53 +45,57 @@ inline static bool datatype(struct HSPParser* parser)
         return false;
     }
     
-    printf("<%s>\n", __func__);
     return true;
 }
-
-/* declaration_list := declaration | declaration_list;
+/*
  * declaration := datatype identifier TK_SemiColon | ;
  */
 inline static bool declaration(struct HSPParser* parser)
 {
+    printf("<%s>\n", __func__);
+    
     if (!datatype(parser)) {
-        hsp_error(parser);
         return false;
     }
     
     match(TK_Identifier);
     match(TK_SemiColon);
-    printf("<%s>\n", __func__);
     
     return true;
 }
 
-inline static void declaration_list(struct HSPParser* parser)
+/* 
+ * declaration_list := declaration | declaration_list; 
+ */
+inline static bool declaration_list(struct HSPParser* parser)
 {
+    printf("<%s>\n", __func__);
+    
     if (parser->token.id == TK_RCurly)
         return;
     
     if (declaration(parser))
         declaration_list(parser);
-    
-    printf("<%s>\n", __func__);
 }
 
-inline static void _struct(struct HSPParser* parser)
+inline static bool _struct(struct HSPParser* parser)
 {
+    printf("<%s>\n", __func__);
+    
     match(TK_Struct);
     match(TK_Identifier);
     match(TK_LCurly);
     
-    declaration_list(parser);
+    if (!declaration_list(parser))
+        return false;
     
     match(TK_RCurly);
-    
-    printf("<%s>\n", __func__);
 }
 
 inline static void translation_unit(struct HSPParser* parser)
 {
+    printf("<%s>\n", __func__);
+    
     switch(parser->token.id) {
     case TK_Struct:
         _struct(parser);
@@ -95,8 +103,6 @@ inline static void translation_unit(struct HSPParser* parser)
     default:
         hsp_error(parser);
     }
-    
-    printf("<%s>\n", __func__);
 }
 
 struct HSPParser* hsp_create_parser(struct HSPLexer* lexer)

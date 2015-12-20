@@ -7,6 +7,7 @@ int main(void)
 {
     char test_string[] = 
         "struct bobby_hill {\n"
+        "\tmatrix4x4 asdf234asdf;\n"
         "\tint HEY;\n"
         "}\n";
         
