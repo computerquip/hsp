@@ -59,7 +59,7 @@ inline static int declaration(struct HSPParser* parser)
     }
     
     match(TK_Identifier);
-    match(TK_SemiColon);
+    match(TK_SemiColonOp);
     
     return true;
 }
@@ -71,7 +71,7 @@ inline static bool declaration_list(struct HSPParser* parser)
 {
     printf("<%s>\n", __func__);
     
-    if (parser->token.id == TK_RCurly)
+    if (parser->token.id == TK_RCurlyOp)
         return true;
     
     if (declaration(parser))
@@ -84,12 +84,12 @@ inline static bool _struct(struct HSPParser* parser)
     
     match(TK_Struct);
     match(TK_Identifier);
-    match(TK_LCurly);
+    match(TK_LCurlyOp);
     
     if (!declaration_list(parser))
         return false;
     
-    match(TK_RCurly);
+    match(TK_RCurlyOp);
 }
 
 inline static void translation_unit(struct HSPParser* parser)
