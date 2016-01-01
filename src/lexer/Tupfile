@@ -1,2 +1,4 @@
+INCLUDES = ..
+
 : Lexer.rl |> ragel -o %o %b |> Lexer.c
-: Lexer.c |> gcc -o %o -c %f |> Lexer.o
+: Lexer.c | ../parser/Parser.h |> gcc -o %o -I$(INCLUDES) -c %f |> Lexer.o

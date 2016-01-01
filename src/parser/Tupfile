@@ -1,3 +1,4 @@
 INCLUDES = ..
 
-: Parser.c |> gcc -I$(INCLUDES) -o %o -c %f |> Parser.o
+: Parser.g |> LLnextgen -v3 %f |> Parser.c Parser.h | LL.output
+: Parser.c | Parser.h Parser.g |> gcc -I$(INCLUDES) -o %o -c %f |> Parser.o

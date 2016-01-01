@@ -1,48 +1,89 @@
 struct vs_input
 {
-    float3 osPosition           : POSITION;
-    float2 texCoord             : TEXCOORD0;
-    float4 color                : COLOR0;
+    float3 osPosition;
+    float2 texCoord;
 };
 
 struct vs_output
 {
-    float4 color                : COLOR0;
-    float2 texCoord             : TEXCOORD0;
+    float4 color;
+    float2 texCoord;
 };
 
 struct ps_input
 {
-    float4 color                : COLOR0;
-    float2 texCoord             : TEXCOORD0;
+    float4 color;
+    float2 texCoord;
 };
 
 struct ps_output
 {
-    float4 color                : COLOR0;
-    float  depth                : DEPTH;
+    float4 color;
+    float  depth;
 };
 
 sampler2D   baseTexture;
 
-vs_output BasicVS(vs_input input)
+void BasicVS(int input)
 {
-    vs_output output;
-    output.texCoord          = input.texCoord;
-    output.color             = input.color;
-    return output;
-}
+	/* Assignment operator */
+	a = b;
+	a += b;
+	a -= b;
+	a *= b;
+	a /= b;
+	a %= b;
+	a ^= b;
+	a &= b;
+	a |= b;
+	a <<= b;
+	a >>= b;
 
-ps_output SolidPS(ps_input input)
-{
-    ps_output output;
-    output.color = input.color;
-    return output;
-}
+	/* Comparison operator */
+	a == b;
+	a != b;
+	a < b;
+	a > b;
+	a <= b;
+	a >= b;
 
-ps_output TexturePS(ps_input input)
-{
-    ps_output output;
-    output.color = input.color * tex2D(baseTexture, input.texCoord);
-    return output;
+	/* post/prefix */
+	++a;
+	--a;
+	a++;
+	a--;
+
+	/* Logical */
+	!a;
+	a && b;
+	a || b;
+
+	/* Member Access */
+	a[b];
+	*a;
+	&a;
+	a->b;
+	a.b;
+
+	/* Arithmetic */
+	+a;
+	-a;
+	a + b;
+	a - b;
+	a * b;
+	a / b;
+	a % b;
+	~a;
+	a & b;
+	a | b;
+	a ^ b;
+	a << b;
+	a >> b;
+
+	/* Other */
+	f();
+	a,b;
+	(int)a;
+
+
 }
