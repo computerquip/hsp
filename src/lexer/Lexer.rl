@@ -56,10 +56,10 @@ struct HSPLexer {
 	main :=
 	|*
 		# Literals
-		float_lit { send_token(FLOAT_CONSTANT); fbreak; };
-		hex_lit { send_token(INTEGER_CONSTANT); fbreak; };
-		decimal_lit { send_token(INTEGER_CONSTANT); fbreak; };
-		octal_lit {send_token(INTEGER_CONSTANT); fbreak; };
+		float_lit { send_token(FLOAT_LIT); fbreak; };
+		hex_lit { send_token(INTEGER_LIT); fbreak; };
+		decimal_lit { send_token(INTEGER_LIT); fbreak; };
+		octal_lit {send_token(INTEGER_LIT); fbreak; };
 
 		# Class Modifiers
 		extern { send_token(EXTERN); fbreak; };
@@ -78,6 +78,7 @@ struct HSPLexer {
 		# Data Types
 		struct { send_token(STRUCT); fbreak; };
 		int { send_token(INT); fbreak; };
+		string_lit { send_token(STRING_LIT); fbreak; };
 
 		# Identifier
 		identifier { send_token(IDENTIFIER); fbreak; };
@@ -116,12 +117,20 @@ struct HSPLexer {
 		bitoreq_op  { send_token(BITOREQ_OP); fbreak; };
 		xoreq_op    { send_token(XOREQ_OP); fbreak; };
 
+		lshift_op {send_token(LSHIFT_OP); fbreak; };
+		rshift_op {send_token(RSHIFT_OP); fbreak; };
 		gt_op     { send_token(GT_OP); fbreak; };
 		lt_op     { send_token(LT_OP); fbreak; };
 		gteq_op   { send_token(GTEQ_OP); fbreak; };
 		lteq_op   { send_token(LTEQ_OP); fbreak; };
 		comp_op   { send_token(COMP_OP); fbreak; };
 		diff_op   { send_token(DIFF_OP); fbreak; };
+
+		and_op { send_token(AND_OP); fbreak; };
+		or_op  { send_token(OR_OP); fbreak; };
+		xor_op { send_token(XOR_OP); fbreak; };
+		bitand_op { send_token(BITAND_OP); fbreak; };
+		bitor_op  { send_token(BITOR_OP); fbreak; };
 
 		inc_op { send_token(INC_OP); fbreak; };
 		dec_op { send_token(DEC_OP); fbreak; };
@@ -169,6 +178,13 @@ extern int hsp_lex(struct HSPLexer *lexer)
 	lexer->length = lexer->p - lexer->data;
 
 	return token;
+}
+
+struct HSPLexeme hsp_get_lexeme(struct HSPLexer *lexer)
+{
+	struct HSPLexeme lexeme;
+	lexeme.data = lexer->ts;
+	lexeme.size = lexer->te - lexer->ts;
 }
 
 unsigned int hsp_get_line(struct HSPLexer *lexer)

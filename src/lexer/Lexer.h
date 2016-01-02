@@ -44,11 +44,6 @@ static const char *HSPTokenMap[] = {
 
 #define GET_TOKEN_STRING(____token) (HSPTokenMap[____token - 256])
 
-struct HSPLexeme {
-	uint16_t size;
-	const char* data;
-};
-
 union HSPTokenData {
 	/* Constant or Literal Values */
 	uint32_t constant;
@@ -65,6 +60,11 @@ struct HSPToken {
 	union HSPTokenData data;
 };
 #endif
+
+struct HSPLexeme {
+	uint16_t size;
+	const char* data;
+};
 
 #ifdef __cplusplus
 extern "C" {

@@ -23,8 +23,9 @@
 %label NOINTERPOLATION, "nointerpolation";
 %label NOPERSPECTIVE, "noperspective";
 %label SAMPLE, "sample";
-%label FLOAT_CONSTANT, "float literal";
-%label INTEGER_CONSTANT, "integral literal";
+%label FLOAT_LIT, "float literal";
+%label INTEGER_LIT, "integral literal";
+%label STRING_LIT, "string literal";
 %label EXTERN, "extern";
 %label PRECISE, "precise";
 %label STATIC, "static";
@@ -63,6 +64,7 @@
 
 /* Operators */
 %token ADD_OP, SUB_OP, DIV_OP, MUL_OP, MOD_OP, XOR_OP;
+%token BITAND_OP, BITOR_OP;
 
 /* Assignment Operators */
 %label EQUAL_OP, "equal '='";
@@ -70,12 +72,18 @@
 %token LSHIFTEQ_OP, RSHIFTEQ_OP;
 %token BITANDEQ_OP, BITOREQ_OP, XOREQ_OP;
 
+/* Shift Operators */
+%token LSHIFT_OP, RSHIFT_OP;
+
 /* Relation Operators */
 %token LT_OP, GT_OP, LTEQ_OP, GTEQ_OP;
 %token COMP_OP, DIFF_OP;
 
 /* Unary Operators */
 %token INC_OP, DEC_OP;
+
+/*  */
+%token AND_OP, OR_OP;
 
 %token BUFFER, VECTOR, MATRIX;
 %token BOOL, INT, UINT, DWORD, HALF, FLOAT, DOUBLE;
@@ -107,6 +115,17 @@ void LLmessage(struct LLthis *LLthis, int LLtoken) {
 	}
 }
 
+int tab_counter = 0;
+
+void print_parse(const char * message)
+{
+	for (int i = 0; i < tab_counter; ++i) {
+		printf("\t");
+	}
+
+	printf("%s\n", message);
+}
+
 int hsp_lex_wrap(struct LLthis *LLthis)
 {
 	return hsp_lex(LLdata);
@@ -133,13 +152,13 @@ vector_type :
 	VECTOR_BOOL |
 	VECTOR_INT | VECTOR_UINT | VECTOR_DWORD |
 	VECTOR_HALF | VECTOR_FLOAT | VECTOR_DOUBLE |
-	VECTOR LT_OP scalar_type COMMA INTEGER_CONSTANT GT_OP;
+	VECTOR LT_OP scalar_type COMMA INTEGER_LIT GT_OP;
 
 matrix_type :
 	MATRIX_BOOL |
 	MATRIX_INT | MATRIX_UINT | MATRIX_DWORD |
 	MATRIX_HALF | MATRIX_FLOAT | MATRIX_DOUBLE |
-	MATRIX LT_OP scalar_type COMMA INTEGER_CONSTANT COMMA INTEGER_CONSTANT GT_OP;
+	MATRIX LT_OP scalar_type COMMA INTEGER_LIT COMMA INTEGER_LIT GT_OP;
 
 primitive_type :
 	buffer_type |
@@ -147,7 +166,12 @@ primitive_type :
 	matrix_type |
 	scalar_type;
 
-user_defined_type { }:
+constant :
+	STRING_LIT |
+	INTEGER_LIT |
+	FLOAT_LIT;
+
+user_defined_type :
 	IDENTIFIER;
 
 any_type :
@@ -164,46 +188,104 @@ interpolation_modifier :
 clipplanes :
 	LBRACKET CLIPPLANES LPAREN [ IDENTIFIER [ COMMA IDENTIFIER ]*5 ]? RPAREN;
 
-primitive_expression :
+primary_expression :
 	IDENTIFIER |
-	LPAREN expression RPAREN |
-	INTEGER_CONSTANT |
-	FLOAT_CONSTANT;
+	constant |
+	LPAREN [
+		expression RPAREN |
+		primitive_type RPAREN IDENTIFIER
+	];
 
 lhs_expression :
-	primitive_expression;
+	primary_expression |
+	unary_expression;
+
+unary_expression :
+	ADD_OP primary_expression |
+	SUB_OP primary_expression;
+
+additive_expression :
+	ADD_OP expression |
+	SUB_OP expression;
+
+shift_expression :
+	LSHIFT_OP expression |
+	RSHIFT_OP expression;
+
+multiplicative_expression :
+	MUL_OP expression |
+	DIV_OP expression |
+	MOD_OP expression;
+
+assignment_expression :
+	EQUAL_OP expression |
+	ADDEQ_OP expression |
+	SUBEQ_OP expression |
+	DIVEQ_OP expression |
+	MULEQ_OP expression |
+	MODEQ_OP expression |
+	XOREQ_OP expression |
+	BITANDEQ_OP expression |
+	BITOREQ_OP  expression |
+	LSHIFTEQ_OP expression |
+	RSHIFTEQ_OP expression;
+
+relational_expression :
+	LT_OP expression |
+	GT_OP expression |
+	LTEQ_OP expression |
+	GTEQ_OP expression;
+
+equality_expression :
+	COMP_OP expression |
+	DIFF_OP expression;
+
+and_expression :
+	BITAND_OP expression;
+
+exclusive_or_expression :
+	XOR_OP expression;
+
+inclusive_or_expression :
+	BITOR_OP expression;
+
+logical_and_expression :
+	AND_OP expression;
+
+logical_or_expression :
+	OR_OP expression;
 
 rhs_expression :
-	ADD_OP primitive_expression |
-	SUB_OP primitive_expression |
-	DIV_OP primitive_expression |
-	MUL_OP primitive_expression |
-
-	EQUAL_OP primitive_expression |
-	ADDEQ_OP primitive_expression |
-	SUBEQ_OP primitive_expression |
-	DIVEQ_OP primitive_expression |
-	MULEQ_OP primitive_expression |
-	MODEQ_OP primitive_expression |
-	XOREQ_OP primitive_expression |
-
-	BITANDEQ_OP primitive_expression |
-	BITOREQ_OP primitive_expression |
-	LSHIFTEQ_OP primitive_expression |
-	RSHIFTEQ_OP primitive_expression |
-
-	LT_OP primitive_expression |
-	GT_OP primitive_expression |
-	LTEQ_OP primitive_expression |
-	GTEQ_OP primitive_expression |
-	COMP_OP primitive_expression |
-	DIFF_OP primitive_expression |
+	additive_expression |
+	multiplicative_expression |
+	assignment_expression |
+	shift_expression |
+	relational_expression |
+	equality_expression |
+	and_expression |
+	exclusive_or_expression |
+	inclusive_or_expression |
+	logical_and_expression |
+	logical_or_expression |
 	;
 
+argument_list :
+	[expression COMMA]*;
+
+postfix :
+	INC_OP |
+	DEC_OP |
+	LPAREN argument_list RPAREN;
+
 expression :
-	lhs_expression rhs_expression;
+	lhs_expression
+	[
+		rhs_expression |
+		postfix
+	];
 
 statement :
+	SEMI |
 	expression SEMI |
 	RETURN expression SEMI;
 
@@ -273,7 +355,7 @@ texture_type_spec :
 
 typedef_decl : TYPEDEF CONST? any_type IDENTIFIER SEMI;
 
-translation_unit :
+translation_unit  :
 	[
 		func_or_var_decl |
 		class_decl |
@@ -282,4 +364,4 @@ translation_unit :
 		sampler_decl |
 		texture_decl |
 		typedef_decl
-	]*;
+	]* { print_parse("translation_unit"); };

@@ -47,43 +47,36 @@ void BasicVS(int input)
 	a <= b;
 	a >= b;
 
-	/* post/prefix */
-	++a;
-	--a;
-	a++;
-	a--;
+	a = b + c - (a ^= (b));
 
-	/* Logical */
-	!a;
 	a && b;
 	a || b;
 
-	/* Member Access */
-	a[b];
-	*a;
-	&a;
-	a->b;
-	a.b;
-
-	/* Arithmetic */
-	+a;
-	-a;
 	a + b;
 	a - b;
 	a * b;
 	a / b;
 	a % b;
-	~a;
 	a & b;
 	a | b;
 	a ^ b;
 	a << b;
 	a >> b;
 
-	/* Other */
 	f();
-	a,b;
 	(int)a;
+/*
+	~a;
+	!a;
+	a[b];
+	a.b;
 
+	+a;
+	-a;
 
+	++a;
+	--a;
+*/
+	a++;
+	a--;
 }
