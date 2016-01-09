@@ -34,6 +34,7 @@
 %label CONST, "const";
 %label ROW_MAJOR, "row_major";
 %label COLUMN_MAJOR, "column_major";
+%token TYPEDEF;
 %token WHITESPACE;
 %token COMMENT;
 
@@ -95,7 +96,9 @@
 
 {
 #include "lexer/Lexer.h"
+#include "parser/AST.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 void LLmessage(struct LLthis *LLthis, int LLtoken) {
 	fprintf(stderr, "Line:%d:%d: ",
@@ -115,24 +118,19 @@ void LLmessage(struct LLthis *LLthis, int LLtoken) {
 	}
 }
 
-int tab_counter = 0;
-
-void print_parse(const char * message)
-{
-	for (int i = 0; i < tab_counter; ++i) {
-		printf("\t");
-	}
-
-	printf("%s\n", message);
-}
-
 int hsp_lex_wrap(struct LLthis *LLthis)
 {
 	return hsp_lex(LLdata);
 }
+
+void hsp_set_ast_identifier(ASTIdentifier *identifier, struct HSPLexer *lexer)
+{
+	struct HSPLexeme lexeme = hsp_get_lexeme(lexer);
+	memcpy(identifier, &lexeme, sizeof(identifier));
+}
 }
 
-scalar_type :
+scalar_type<ASTTypeID> :
 	BOOL |
 	INT | UINT | DWORD |
 	HALF | FLOAT | DOUBLE |
@@ -140,7 +138,7 @@ scalar_type :
 	MIN16INT | MIN12INT |
 	MIN16UINT;
 
-buffer_type :
+buffer_type<ASTTypeID> :
 	BUFFER LT_OP
 	[
 		scalar_type |
@@ -148,35 +146,41 @@ buffer_type :
 		matrix_type
 	] GT_OP;
 
-vector_type :
+vector_type<ASTTypeID> :
 	VECTOR_BOOL |
 	VECTOR_INT | VECTOR_UINT | VECTOR_DWORD |
 	VECTOR_HALF | VECTOR_FLOAT | VECTOR_DOUBLE |
 	VECTOR LT_OP scalar_type COMMA INTEGER_LIT GT_OP;
 
-matrix_type :
+matrix_type<ASTTypeID> :
 	MATRIX_BOOL |
 	MATRIX_INT | MATRIX_UINT | MATRIX_DWORD |
 	MATRIX_HALF | MATRIX_FLOAT | MATRIX_DOUBLE |
 	MATRIX LT_OP scalar_type COMMA INTEGER_LIT COMMA INTEGER_LIT GT_OP;
 
-primitive_type :
-	buffer_type |
-	vector_type |
-	matrix_type |
-	scalar_type;
+primitive_type<ASTTypeID> :
+	buffer_type { return buffer_type; }|
+	vector_type { return vector_type; }|
+	matrix_type { return matrix_type; }|
+	scalar_type { return scalar_type; };
 
 constant :
 	STRING_LIT |
 	INTEGER_LIT |
 	FLOAT_LIT;
 
-user_defined_type :
-	IDENTIFIER;
+user_defined_type<ASTTypeID> :
+	IDENTIFIER { return Type_UserDefined; };
 
-any_type :
-	primitive_type |
-	user_defined_type;
+any_type(ASTType *type)
+{
+	ast_set_source_loc(type, LLdata);
+} :
+	primitive_type { type->id = primitive_type; type->name = hsp_get_lexeme(LLdata); } |
+	user_defined_type { return user_defined_type; };
+
+identifier(ASTIdentifier *identifier):
+	IDENTIFIER { hsp_set_ast_identifier(identifier, LLdata); };
 
 interpolation_modifier :
 	LINEAR |
@@ -186,7 +190,7 @@ interpolation_modifier :
 	SAMPLE;
 
 clipplanes :
-	LBRACKET CLIPPLANES LPAREN [ IDENTIFIER [ COMMA IDENTIFIER ]*5 ]? RPAREN;
+	LBRACKET CLIPPLANES LPAREN [ IDENTIFIER [ COMMA IDENTIFIER ]*5 ]? RPAREN RBRACKET;
 
 primary_expression :
 	IDENTIFIER |
@@ -293,27 +297,53 @@ statement_block :
 	statement*;
 
 function_body : statement_block;
+
 function_storage_class : INLINE;
-function_arguments : LPAREN variable_type_specifier IDENTIFIER [COMMA variable_type_specifier IDENTIFIER]* RPAREN;
-function_decl : function_storage_class* function_type_specifier IDENTIFIER function_arguments LCURLY function_body RCURLY;
+
+function_arguments :
+	LPAREN variable_type_specifier IDENTIFIER
+	[COMMA variable_type_specifier IDENTIFIER]* RPAREN;
+
+function_decl(ASTTranslationUnit *root) :
+	function_storage_class+ clipplanes? PRECISE? function_type_specifier
+	IDENTIFIER function_arguments LCURLY function_body RCURLY
+|
+	clipplanes PRECISE? function_type_specifier
+	IDENTIFIER function_arguments LCURLY function_body RCURLY;
+
 function_type_specifier :
 	scalar_type |
 	vector_type |
 	matrix_type |
 	VOID;
 
-variable_storage_class : EXTERN | STATIC | NOINTERPOLATION | SHARED | GROUPSHARED | UNIFORM | VOLATILE;
+variable_storage_class :
+	EXTERN | STATIC | NOINTERPOLATION |
+	SHARED | GROUPSHARED | UNIFORM | VOLATILE;
+
+variable_type_modifier :
+	CONST | ROW_MAJOR | COLUMN_MAJOR;
+
 variable_assignment : EQUAL_OP expression SEMI;
-variable_decl : variable_storage_class* variable_type_specifier IDENTIFIER variable_assignment;
+
+variable_decl(ASTTranslationUnit *root) :
+	variable_storage_class+ variable_type_modifier* variable_type_specifier
+	IDENTIFIER variable_assignment
+|
+	variable_type_modifier+ variable_type_specifier
+	IDENTIFIER variable_assignment;
+
 variable_type_specifier :
 	scalar_type |
 	buffer_type |
 	vector_type |
 	matrix_type;
 
-/* "You can't immediately tell the difference between a variable or function with an LL(1) grammar."
- * "You have to wait until a left parenthesis, semicolon, or equal symbol appears to tell." */
-func_or_var_decl :
+/* You can't immediately tell the difference
+	between a variable or function with an LL(1) grammar.
+ * You have to wait until a left parenthesis,
+  	semicolon, or equal symbol appears to tell. */
+func_or_var_decl(ASTTranslationUnit *root) :
 	any_type IDENTIFIER
 	[
 		SEMI
@@ -324,17 +354,29 @@ func_or_var_decl :
 	];
 
 class_body : ;
-class_decl : CLASS IDENTIFIER LCURLY class_body RCURLY;
 
-struct_member_decl : interpolation_modifier? any_type IDENTIFIER [ COLON IDENTIFIER ]? SEMI;
+class_decl(ASTTranslationUnit *root) :
+	CLASS IDENTIFIER LCURLY class_body RCURLY;
+
+struct_member_decl :
+	interpolation_modifier? any_type
+	IDENTIFIER [ COLON IDENTIFIER ]? SEMI;
+
 struct_body : struct_member_decl+;
-struct_decl : STRUCT IDENTIFIER LCURLY struct_body RCURLY SEMI;
+
+struct_decl(ASTTranslationUnit *root) :
+	STRUCT IDENTIFIER LCURLY struct_body RCURLY SEMI;
 
 interface_body : ;
-interface_decl : INTERFACE IDENTIFIER LCURLY interface_body RCURLY SEMI;
+
+interface_decl(ASTTranslationUnit *root) : INTERFACE IDENTIFIER LCURLY interface_body RCURLY SEMI;
 
 sampler_body : ;
-sampler_decl :	sampler_type_spec IDENTIFIER [ LCURLY sampler_body RCURLY ]? SEMI;
+
+sampler_decl(ASTTranslationUnit *root) :
+	sampler_type_spec IDENTIFIER [
+ 	LCURLY sampler_body RCURLY ]? SEMI;
+
 sampler_type_spec :
 	SAMPLER |
 	SAMPLER1D |
@@ -345,7 +387,11 @@ sampler_type_spec :
 	SAMPLER_COMPARISON_STATE;
 
 texture_body : ;
-texture_decl : texture_type_spec IDENTIFIER [ LCURLY texture_body RCURLY ]? SEMI;
+
+texture_decl(ASTTranslationUnit *root) :
+	texture_type_spec IDENTIFIER
+	[ LCURLY texture_body RCURLY ]? SEMI;
+
 texture_type_spec :
 	TEXTURE |
 	TEXTURE1D |
@@ -353,15 +399,25 @@ texture_type_spec :
 	TEXTURE3D |
 	TEXTURE_CUBE;
 
-typedef_decl : TYPEDEF CONST? any_type IDENTIFIER SEMI;
+typedef_decl(ASTTranslationUnit *root) { ASTTypedefDecl *typedefi; }:
+	TYPEDEF { typedefi = malloc(sizeof(ASTTypedefDecl)); }
+	CONST? { typedefi->is_const = true; }
+	any_type(&typedefi->type)
+	identifier(&typedefi->name)
+	SEMI;
 
-translation_unit  :
-	[
-		func_or_var_decl |
-		class_decl |
-		struct_decl |
-		interface_decl |
-		sampler_decl |
-		texture_decl |
-		typedef_decl
-	]* { print_parse("translation_unit"); };
+translation_unit
+{
+	ASTTranslationUnit *root = malloc(sizeof(ASTTranslationUnit));
+} :
+[
+	func_or_var_decl(root) |
+	function_decl(root) |
+	variable_decl(root) |
+	class_decl(root) |
+	struct_decl(root) |
+	interface_decl(root) |
+	sampler_decl(root) |
+	texture_decl(root) |
+	typedef_decl(root)
+]*;

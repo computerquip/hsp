@@ -24,7 +24,7 @@ struct ps_output
 
 sampler2D   baseTexture;
 
-void BasicVS(int input)
+[clipplanes()] void BasicVS(int input)
 {
 	/* Assignment operator */
 	a = b;
@@ -80,3 +80,5 @@ void BasicVS(int input)
 	a++;
 	a--;
 }
+
+typedef int BOBOBOB;

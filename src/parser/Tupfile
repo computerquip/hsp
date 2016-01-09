@@ -1,4 +1,8 @@
 INCLUDES = ..
+LIBS = clangAST
+GRAMMAR = Parser.g
+SOURCE = Parser.c AST.c
+HEADERS = Parser.h AST.h
 
-: Parser.g |> LLnextgen -v3 %f |> Parser.c Parser.h | LL.output
-: Parser.c | Parser.h Parser.g |> gcc -I$(INCLUDES) -o %o -c %f |> Parser.o
+: $(GRAMMAR) |> LLnextgen -v3 %f |> Parser.c Parser.h | LL.output
+: foreach $(SOURCE) | $(HEADERS) $(GRAMMAR) |> gcc -I$(INCLUDES) -l$(LIBS) -o %o -c %f |> %B.o

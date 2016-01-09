@@ -61,6 +61,10 @@ struct HSPLexer {
 		decimal_lit { send_token(INTEGER_LIT); fbreak; };
 		octal_lit {send_token(INTEGER_LIT); fbreak; };
 
+		# Keywords
+		clipplanes { send_token(CLIPPLANES); fbreak; };
+		typedef { send_token(TYPEDEF); fbreak; };
+
 		# Class Modifiers
 		extern { send_token(EXTERN); fbreak; };
 		no_interpolation { send_token(NOINTERPOLATION); fbreak; };
@@ -78,6 +82,7 @@ struct HSPLexer {
 		# Data Types
 		struct { send_token(STRUCT); fbreak; };
 		int { send_token(INT); fbreak; };
+		void { send_token(VOID); fbreak; };
 		string_lit { send_token(STRING_LIT); fbreak; };
 
 		# Identifier
@@ -90,6 +95,8 @@ struct HSPLexer {
 		multi_comment { /* TODO: This breaks line/column count */ };
 
 		# Operators
+		lbracket_op { send_token(LBRACKET); fbreak; };
+		rbracket_op { send_token(RBRACKET); fbreak; };
 		lcurly_op { send_token(LCURLY); fbreak; };
 		rcurly_op { send_token(RCURLY); fbreak; };
 		lparen_op { send_token(LPAREN); fbreak; };
@@ -184,7 +191,7 @@ struct HSPLexeme hsp_get_lexeme(struct HSPLexer *lexer)
 {
 	struct HSPLexeme lexeme;
 	lexeme.data = lexer->ts;
-	lexeme.size = lexer->te - lexer->ts;
+	lexeme.length = lexer->te - lexer->ts;
 }
 
 unsigned int hsp_get_line(struct HSPLexer *lexer)
